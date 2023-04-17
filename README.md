@@ -1,6 +1,6 @@
 **Description**
 
-Our application is a local site for project exchange and help between researchers and bioinformaticians within the APHP server. It is designed to facilitate the task of bioinformaticians in the realization of their projects.
+
 
 
 **Usage**
@@ -29,6 +29,6 @@ We welcome contributions to our application!
 If you have any questions or concerns about our application, please contact us at
 
 
-                            dina_ouahbi@yahoo.com
+                            julien.robert@aphp.fr
                             theo.ferreira@aphp.fr
 
