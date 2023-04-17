@@ -7,20 +7,7 @@
 
 **Usage**
 
-To use our application, please follow these steps:
 
-Clone the project on git hub 
-Open the project in a text editor
-Configure your environment variables (in your Operating System) 
-
-- MAIL_PASSWORD
-- MAIL_USERNAME
-- SECRET_KEY
-- SQLALCHEMY_DATABASE_URI
-
-Create your own python environment and make a 'pip install requirement.txt'.
-
-Open a terminal (in the project) and launch the application with the following command : python run.py
 
 **Contributing**
 
