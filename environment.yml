@@ -13,7 +13,7 @@ dependencies:
   - bwa=0.7.17
   - samtools=1.6
   - bcftools=1.9
-  - raxml=8.2.12
+  - iqtree=2.0.3
   - fastqc=0.11.9
   - pip
   - pip:
