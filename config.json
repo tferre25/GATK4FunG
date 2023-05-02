@@ -4,7 +4,7 @@
 		"OUTPUT_PATH" : "/home/julien/Documents/Parasito/output",
 		"filterGatkGenotypes_PATH" : "/home/julien/Documents/Parasito/Reference",
 		"vcfToFasta_PATH" : "/home/julien/Documents/Parasito/Reference",
-		"FASTA" : ""
+		"ref_path" : "/home/julien/Documents/Parasito/ref_fasta"
 	},
 	"bwamem": {
 		"OPTIONS" : "-t 8",

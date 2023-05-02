@@ -30,6 +30,7 @@ import os
 #Paths
 inpath = config["general_path"]["INPUT_PATH"]
 outpath = config["general_path"]["OUTPUT_PATH"]
+fastapath = config["general_path"]["REF_PATH"]
 filterGatkGenotypes = config["general_path"]["filterGatkGenotypes_PATH"]
 vcftofasta = config["general_path"]["vcfToFasta_PATH"]
 
@@ -46,6 +47,17 @@ for name in sampleName:
 
 variants = ' --variant '.join(str(outpath + "/" + elem + "/" + elem + ".g.vcf.gz") for elem in sample_id)
 seed = random.randint(10000, 99999)
+
+#Récupération nom références + nombre
+ref_id = []
+sampleName=glob.glob(fastapath+"/*.fasta")
+num_fasta_files = len(sampleName)
+for name in sampleName:
+    name = name.replace(fastapath+"/", '')
+    a = re.split('/', name)
+    name = a[0]
+    name = name.replace('.fasta', '')
+    ref_id.append(name)
 
 #Récupération du nom du run
 run_name=os.path.basename(inpath)
