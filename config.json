@@ -1,17 +1,17 @@
 {
 	"general_path": {
 		"INPUT_PATH" : "/home/julien/Documents/Parasito/data",
-		"OUTPUT_PATH" : "/home/julien/Documents/Parasito/output",
+		"OUTPUT_PATH" : "/home/julien/Documents/Parasito/output_iqtree_ref",
 		"filterGatkGenotypes_PATH" : "/home/julien/Documents/Parasito/Reference",
 		"vcfToFasta_PATH" : "/home/julien/Documents/Parasito/Reference",
-		"ref_path" : "/home/julien/Documents/Parasito/ref_fasta"
+		"REF_PATH" : "/home/julien/Documents/Parasito/ref_fasta"
 	},
 	"bwamem": {
 		"OPTIONS" : "-t 8",
 		"DB" : "/home/julien/Documents/Parasito/Reference/GCF_002775015.1_Cand_auris_B11221_V1_genomic.fna"
 	},
-	"raxml": {
-		"OPTIONS" : "-T 8"
+	"iqtree": {
+		"OPTIONS" : "-bb 1000 -nt 8 -wbt"
 	}
 }
 

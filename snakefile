@@ -14,7 +14,6 @@
 #samtools v1.6 (conda)
 #bcftools v1.9 (conda)
 #mafft v7.310 (conda)
-#raxml v8.2.12 (conda) ---- à retirer une fois iqtree validé
 #iqtree v2.0.3 (conda)
 #fastqc v0.11.9 (conda)
 #multiqc v1.14 (pip install)
@@ -69,6 +68,7 @@ mate_ids = ["R1","R2"]
 multiqc = (outpath+"/multiqc/multiqc_report.html")
 #ubam = expand(outpath+"/{sample_id}/{sample_id}.unaligned.bam", sample_id=sample_ids)
 #bwa_mem = expand(outpath+"/{sample_id}/{sample_id}_bwa_mem.bam", sample_id=sample_ids)
+
 #markilluminaadapters = expand((outpath+"/{sample_id}/{sample_id}_markilluminaadapters.bam", outpath+"/{sample_id}/{sample_id}_markilluminaadapters_metrics.txt"), sample_id = sample_id)
 #addorreplacereadgroups = expand((outpath+"/{sample_id}/{sample_id}.readgroups_unmapped.bam"), sample_id = sample_id)
 #samtofastq = expand((outpath+"/{sample_id}/{sample_id}.fastq"), sample_id = sample_id)
@@ -85,7 +85,7 @@ multiqc = (outpath+"/multiqc/multiqc_report.html")
 #costumevcffilter = (outpath+"/"+run_name+".filtered_SNPs_GQ50_AD08_DP10.vcf", outpath+"/"+run_name+".variant_qc_genotype_filter.tsv")
 #vcftofasta = (outpath+"/"+run_name+".vcftofasta.fasta")
 #mafft = (outpath+"/"+run_name+".local_alignment.fasta")
-raxml = (outpath+"/RAxML_bestTree."+run_name) #   -------------- à compléter
+iqtree = (outpath+"/iqtree_bestTree."+run_name) #   -------------- à compléter
 
 
 rule all:
@@ -110,7 +110,7 @@ rule all:
 #		costumevcffilter,
 #		vcftofasta,
 #		mafft,
-		raxml
+		iqtree
 	shell:
 		"touch "+outpath+"/done"
 
@@ -395,16 +395,16 @@ rule vcftofasta:
 		shell('echo {input} > {outpath}/name.txt')
 		shell('python {vcftofasta}/vcfSnpsToFasta.py {outpath}/name.txt > {output}')
 
-rule raxml:
+rule iqtree:
 	input:
 		outpath+"/"+run_name+".vcftofasta.fasta"
 	output:
-		outpath+"/RAxML_bestTree."+run_name
+		outpath+"/iqtree_bestTree."+run_name
 	params:
-		options = config["raxml"]["OPTIONS"]
+		options = config["iqtree"]["OPTIONS"]
 	log:
-		outpath+"/logs/raxml.log"
+		outpath+"/logs/iqtree.log"
 	run:
 		shell("sed 's/\*/N/g' {input} > {outpath}/data_corrected.fasta")
-		shell('raxmlHPC-PTHREADS-SSE3 {params.options} -f a -m GTRCAT -N 1000 -x {seed} -p {seed} -s {outpath}/data_corrected.fasta -n '+ run_name +' -w {outpath} 2> {log}')
-		shell('echo {seed} > {outpath}/seed.txt')
+		shell('iqtree -s {outpath}/data_corrected.fasta {params.options} -pre {outpath} 2> {log}')
+		#shell('echo {seed} > {outpath}/seed.txt')
