@@ -1,23 +1,19 @@
 # Fungi Variant Calling
 
-**Description**
+## Description
 
 
 
 
-**Usage**
+## Usage
 
 
 
-**Contributing**
+## Contributing
 
 We welcome contributions to our application! 
 
-**Contact**
+## Contact
 
-If you have any questions or concerns about our application, please contact us at
-
-
-                            julien.robert@aphp.fr
-                            theo.ferreira@aphp.fr
+If you have any questions or concerns about our application, please contact us at julien.robert@aphp.fr or theo.ferreira@aphp.fr
 
