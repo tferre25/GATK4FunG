@@ -44,19 +44,26 @@ for name in sampleName:
     name = name.replace('_L001_001.fastq.gz', '')
     sample_id.append(name)
 
-variants = ' --variant '.join(str(outpath + "/" + elem + "/" + elem + ".g.vcf.gz") for elem in sample_id)
-seed = random.randint(10000, 99999)
-
 #Récupération nom références + nombre
 ref_id = []
-sampleName=glob.glob(fastapath+"/*.fasta")
+sampleName = glob.glob(fastapath+"/*.fasta.gz") + glob.glob(fastapath+"/*.fna.gz") + glob.glob(fastapath+"/*.fa.gz")
 num_fasta_files = len(sampleName)
 for name in sampleName:
     name = name.replace(fastapath+"/", '')
     a = re.split('/', name)
     name = a[0]
-    name = name.replace('.fasta', '')
+    name = name.replace('.fasta.gz', '')
+    name = name.replace('.fna.gz', '')
+    name = name.replace('.fa.gz', '')
     ref_id.append(name)
+
+if num_fasta_files == 0 :
+	variants = ' --variant '.join(str(outpath + "/" + elem + "/" + elem + ".g.vcf.gz") for elem in sample_id)
+else:
+	variants = ' --variant '.join(str(outpath + "/" + elem + "/" + elem + ".g.vcf.gz") for elem in sample_id)
+	variants = variants + ' --variant ' + ' --variant '.join(str(outpath + "/" + elem + "/" + elem + ".g.vcf_fasta.gz") for elem in ref_id)
+
+seed = random.randint(10000, 99999)
 
 #Récupération du nom du run
 run_name=os.path.basename(inpath)
@@ -64,20 +71,24 @@ run_name=os.path.basename(inpath)
 mate_ids = ["R1","R2"]
 
 #Déclaration des sorties
-#fastqc = expand(outpath+"/multiqc/{sample_id}_L001_001_fastqc.html", outpath+"/multiqc/{sample_id}_L001_001_fastqc.zip", sample_id=sample_ids)
+#fastqc = expand(outpath+"/multiqc/{sample_id}_L001_001_fastqc.html", outpath+"/multiqc/{sample_id}_L001_001_fastqc.zip", sample_id=sample_id)
 multiqc = (outpath+"/multiqc/multiqc_report.html")
-#ubam = expand(outpath+"/{sample_id}/{sample_id}.unaligned.bam", sample_id=sample_ids)
-#bwa_mem = expand(outpath+"/{sample_id}/{sample_id}_bwa_mem.bam", sample_id=sample_ids)
-
+#ubam = expand(outpath+"/{sample_id}/{sample_id}.unaligned.bam", sample_id=sample_id)
+#bwa_mem = expand(outpath+"/{sample_id}/{sample_id}_bwa_mem.bam", sample_id=sample_id)
+#bwa_mem_fasta = expand(outpath+"/{ref_id}/{ref_id}_bwa_mem.bam", ref_id=ref_ids)
 #markilluminaadapters = expand((outpath+"/{sample_id}/{sample_id}_markilluminaadapters.bam", outpath+"/{sample_id}/{sample_id}_markilluminaadapters_metrics.txt"), sample_id = sample_id)
 #addorreplacereadgroups = expand((outpath+"/{sample_id}/{sample_id}.readgroups_unmapped.bam"), sample_id = sample_id)
 #samtofastq = expand((outpath+"/{sample_id}/{sample_id}.fastq"), sample_id = sample_id)
 #bwa_mem2 = expand((outpath+"/{sample_id}/{sample_id}.sam"), sample_id = sample_id)
-#samtools_view = expand((outpath+"/{sample_id}/{sample_id}.bam"), sample_id = sample_id)
+#sam2bam = expand((outpath+"/{sample_id}/{sample_id}.bam"), sample_id = sample_id)
 #mergebamalignment = expand((outpath+"/{sample_id}/{sample_id}.sorted.bam"), sample_id = sample_id)
+#samtools_sort = expand((outpath+"/{ref_id}/{ref_id}.sorted.bam"), ref_id = ref_id)
 #markduplicates = expand((outpath+"/{sample_id}/{sample_id}.mark_duplicates.bam", outpath+"/{sample_id}/{sample_id}.mark_duplicates.metrics"), sample_id = sample_id)
+#markduplicates_fasta = expand((outpath+"/{ref_id}/{ref_id}.mark_duplicates.bam", outpath+"/{ref_id}/{ref_id}.mark_duplicates.metrics"), ref_id = ref_id)
 #reorderbam = expand((outpath+"/{sample_id}/{sample_id}.reordered.bam", outpath+"/{sample_id}/{sample_id}.reordered.bai"), sample_id =sample_id)
+#reorderbam_fasta = expand((outpath+"/{ref_id}/{ref_id}.reordered.bam", outpath+"/{ref_id}/{ref_id}.reordered.bai"), ref_id =ref_id)
 #haplotypecaller = expand((outpath+"/{sample_id}/{sample_id}.g.vcf.gz", outpath+"/{sample_id}/{sample_id}.g.vcf.gz.tbi"), sample_id =sample_id)
+#haplotypecaller_fasta = expand((outpath+"/{ref_id}/{ref_id}.g.vcf.gz", outpath+"/{ref_id}/{ref_id}.g.vcf.gz.tbi"), ref_id =ref_id)
 #combinegvcfs = (outpath+"/combined_gvcfs.vcf.gz", outpath+"/combined_gvcfs.vcf.gz.tbi")
 #genotypegvcfs = (outpath+"/genotyped_gvcfs.vcf.gz", outpath+"/genotyped_gvcfs.vcf.gz.tbi")
 #hardfiltration = (outpath+"/indels_filtered.vcf.gz", outpath+"/snps_filtered.vcf.gz", outpath+"/"+run_name+".hard_filtered.vcf.gz)
@@ -94,15 +105,20 @@ rule all:
 		multiqc,
 #		ubam,
 #		bwa_mem,
+#		bwa_mem_fasta,
 #		markilluminaadapters,
 #		addorreplacereadgroups,
 #		samtofastq,
 #		bwa_mem2,
-#		samtools_view,
+#		sam2bam,
 #		mergebamalignment,
+#		samtools_sort,
 #		markduplicates,
+#		markduplicates_fasta,
 #		reorderbam,
+#		reorderbam_fasta,
 #		haplotypecaller,
+#		haplotypecaller_fasta,
 #		combinegvcfs,
 #		genotypegvcfs,
 #		hardfiltration,
@@ -210,6 +226,17 @@ rule bwa_mem:
 	shell:
 		'bwa mem {params.options} {params.bwamem_db} {inpath}/{wildcards.sample_id}_L001_001.fastq.gz 2> {log} > {output}'
 
+rule bwa_mem_fasta:
+	output:
+		temp(outpath+"/{ref_id}/{ref_id}_align_fasta.bam")
+	params:
+		bwamem_db = config["bwamem"]["DB"],
+		options = config["bwamem"]["OPTIONS"]
+	log:
+		outpath+"/logs/{ref_id}.bwamem.log"
+	shell:
+		'bwa mem {params.options} {params.bwamem_db} {fastapath}/{wildcards.ref_id}.fna.gz 2> {log} > {output}'
+
 rule markilluminaadapters:
 	input:
 		outpath+"/{sample_id}/{sample_id}_align.bam"
@@ -254,13 +281,13 @@ rule bwa_mem2:
 	shell:
 		"bwa mem {params.options} -M -R '@RG\\tID:FLOWCELL_{wildcards.sample_id}\\tSM:{wildcards.sample_id}\\tPL:ILLUMINA\\tLB:LIB_{wildcards.sample_id}' -p {params.ref} {input} 2> {log} > {output}"
 
-rule samtools_view:
+rule sam2bam:
 	input:
-		outpath+"/{sample_id}/{sample_id}.sam"
+		"{prefix}.sam"
 	output:
-		temp(outpath+"/{sample_id}/{sample_id}.bam")
+		temp("{prefix}.bam")
 	log:
-		outpath+"/logs/{sample_id}.samtools_view.log"
+		"{prefix}.sam2bam.log"
 	shell:
 		'samtools view -1 {input} > {output}'
 
@@ -277,6 +304,16 @@ rule mergebamalignment:
 	shell:
 		'picard MergeBamAlignment ALIGNED={input.bam} UNMAPPED={input.ubam} O={output} R={params.ref} 2> {log}'
 
+rule samtools_sort:
+	input:
+		outpath+"/{ref_id}/{ref_id}_align_fasta.bam"
+	output:
+		temp(outpath+"/{ref_id}/{ref_id}.sorted_fasta.bam")
+	log:
+		outpath+"/logs/{ref_id}.sort.log"
+	shell:
+		'samtools sort -O bam -o {output} {input} 2> {log}'
+
 rule markduplicates:
 	input:
 		outpath+"/{sample_id}/{sample_id}.sorted.bam"
@@ -285,6 +322,17 @@ rule markduplicates:
 		metrics_duplicates = outpath+"/{sample_id}/{sample_id}.marked_duplicates.metrics"
 	log:
 		outpath+"/logs/{sample_id}.markduplicates.log"
+	shell:
+		'picard MarkDuplicates I={input} O={output.bam} M={output.metrics_duplicates} 2> {log}'
+
+rule markduplicates_fasta:
+	input:
+		outpath+"/{ref_id}/{ref_id}.sorted_fasta.bam"
+	output:
+		bam = temp(outpath+"/{ref_id}/{ref_id}.marked_duplicates_fasta.bam"),
+		metrics_duplicates = outpath+"/{ref_id}/{ref_id}.marked_duplicates_fasta.metrics"
+	log:
+		outpath+"/logs/{ref_id}.markduplicates.log"
 	shell:
 		'picard MarkDuplicates I={input} O={output.bam} M={output.metrics_duplicates} 2> {log}'
 
@@ -298,6 +346,20 @@ rule reorderbam:
 		ref = config["bwamem"]["DB"]
 	log:
 		outpath+"/logs/{sample_id}.reorderbam.log"
+	run:
+		shell('picard ReorderSam INPUT={input} OUTPUT={output.bam} REFERENCE={params.ref} 2> {log}')
+		shell('picard BuildBamIndex I={output.bam}')
+
+rule reorderbam_fasta:
+	input:
+		outpath+"/{ref_id}/{ref_id}.marked_duplicates_fasta.bam"
+	output:
+		bam = outpath+"/{ref_id}/{ref_id}.reordered_fasta.bam",
+		bai = outpath+"/{ref_id}/{ref_id}.reordered_fasta.bai"
+	params:
+		ref = config["bwamem"]["DB"]
+	log:
+		outpath+"/logs/{ref_id}.reorderbam.log"
 	run:
 		shell('picard ReorderSam INPUT={input} OUTPUT={output.bam} REFERENCE={params.ref} 2> {log}')
 		shell('picard BuildBamIndex I={output.bam}')
@@ -316,19 +378,50 @@ rule haplotypecaller:
 	shell:
 		'gatk HaplotypeCaller -R {params.ref} -I {input.bam} -O {output.gvcf} -ERC GVCF -ploidy 1 2> {log}'
 
-rule combinegvcfs: #rassemblement de tous les échantillons
+rule haplotypecaller_fasta:
 	input:
-		gvcf = expand(outpath+"/{sample_id}/{sample_id}.g.vcf.gz", sample_id = sample_id),
-		gvcf_index = expand(outpath+"/{sample_id}/{sample_id}.g.vcf.gz.tbi", sample_id = sample_id)
+		bam = outpath+"/{ref_id}/{ref_id}.reordered_fasta.bam",
+		bai = outpath+"/{ref_id}/{ref_id}.reordered_fasta.bai"
 	output:
-		gvcf = temp(outpath+"/combined_gvcfs.vcf.gz"),
-		gvcf_index = temp(outpath+"/combined_gvcfs.vcf.gz.tbi")
+		gvcf = temp(outpath+"/{ref_id}/{ref_id}.g.vcf_fasta.gz"),
+		gvcf_index = temp(outpath+"/{ref_id}/{ref_id}.g.vcf_fasta.gz.tbi")
 	params:
 		ref = config["bwamem"]["DB"]
 	log:
-		outpath+"/logs/combinegvcfs.log"
+		outpath+"/logs/{ref_id}.haplotypecaller.log"
 	shell:
-		'gatk CombineGVCFs -R {params.ref} -O {output.gvcf} --variant {variants} 2> {log}'
+		'gatk HaplotypeCaller -R {params.ref} -I {input.bam} -O {output.gvcf} -ERC GVCF -ploidy 1 2> {log}'
+
+if num_fasta_files == 0 :
+	rule combinegvcfs: #rassemblement de tous les échantillons
+		input:
+			gvcf = expand(outpath+"/{sample_id}/{sample_id}.g.vcf.gz", sample_id = sample_id),
+			gvcf_index = expand(outpath+"/{sample_id}/{sample_id}.g.vcf.gz.tbi", sample_id = sample_id)
+		output:
+			gvcf = temp(outpath+"/combined_gvcfs.vcf.gz"),
+			gvcf_index = temp(outpath+"/combined_gvcfs.vcf.gz.tbi")
+		params:
+			ref = config["bwamem"]["DB"]
+		log:
+			outpath+"/logs/combinegvcfs.log"
+		shell:
+			'gatk CombineGVCFs -R {params.ref} -O {output.gvcf} --variant {variants} 2> {log}'
+else:
+	rule combinegvcfs: #rassemblement de tous les échantillons
+		input:
+			gvcf = expand(outpath+"/{sample_id}/{sample_id}.g.vcf.gz", sample_id = sample_id),
+			gvcf_index = expand(outpath+"/{sample_id}/{sample_id}.g.vcf.gz.tbi", sample_id = sample_id),
+			gvcf_fasta = expand(outpath+"/{ref_id}/{ref_id}.g.vcf_fasta.gz", ref_id = ref_id),
+			gvcf_index_fasta = expand(outpath+"/{ref_id}/{ref_id}.g.vcf_fasta.gz.tbi", ref_id = ref_id)
+		output:
+			gvcf = temp(outpath+"/combined_gvcfs.vcf.gz"),
+			gvcf_index = temp(outpath+"/combined_gvcfs.vcf.gz.tbi")
+		params:
+			ref = config["bwamem"]["DB"]
+		log:
+			outpath+"/logs/combinegvcfs.log"
+		shell:
+			'gatk CombineGVCFs -R {params.ref} -O {output.gvcf} --variant {variants} 2> {log}'
 
 rule genotypegvcfs:
 	input:
