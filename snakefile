@@ -228,14 +228,14 @@ rule bwa_mem:
 
 rule bwa_mem_fasta:
 	output:
-		temp(outpath+"/{ref_id}/{ref_id}_align_fasta.bam")
+		temp(outpath+"/{ref_id}/{ref_id}_align_fasta.sam")
 	params:
-		bwamem_db = config["bwamem"]["DB"],
+		ref = config["bwamem"]["DB"],
 		options = config["bwamem"]["OPTIONS"]
 	log:
 		outpath+"/logs/{ref_id}.bwamem.log"
 	shell:
-		'bwa mem {params.options} {params.bwamem_db} {fastapath}/{wildcards.ref_id}.fna.gz 2> {log} > {output}'
+		"bwa mem {params.options} -M -R '@RG\\tID:FLOWCELL_{wildcards.ref_id}\\tSM:{wildcards.ref_id}\\tPL:ILLUMINA\\tLB:LIB_{wildcards.ref_id}' -p {params.ref} {fastapath}/{wildcards.ref_id}.fna.gz 2> {log} > {output}"
 
 rule markilluminaadapters:
 	input:
