@@ -17,6 +17,7 @@
 #iqtree v2.0.3 (conda)
 #fastqc v0.11.9 (conda)
 #multiqc v1.14 (pip install)
+#trimmomatic v0.39 (conda)
 
 import random
 import glob
@@ -44,24 +45,7 @@ for name in sampleName:
     name = name.replace('_L001_001.fastq.gz', '')
     sample_id.append(name)
 
-#Récupération nom références + nombre
-ref_id = []
-sampleName = glob.glob(fastapath+"/*.fasta.gz") + glob.glob(fastapath+"/*.fna.gz") + glob.glob(fastapath+"/*.fa.gz")
-num_fasta_files = len(sampleName)
-for name in sampleName:
-    name = name.replace(fastapath+"/", '')
-    a = re.split('/', name)
-    name = a[0]
-    name = name.replace('.fasta.gz', '')
-    name = name.replace('.fna.gz', '')
-    name = name.replace('.fa.gz', '')
-    ref_id.append(name)
-
-if num_fasta_files == 0 :
-	variants = ' --variant '.join(str(outpath + "/" + elem + "/" + elem + ".g.vcf.gz") for elem in sample_id)
-else:
-	variants = ' --variant '.join(str(outpath + "/" + elem + "/" + elem + ".g.vcf.gz") for elem in sample_id)
-	variants = variants + ' --variant ' + ' --variant '.join(str(outpath + "/" + elem + "/" + elem + ".g.vcf_fasta.gz") for elem in ref_id)
+variants = ' --variant '.join(str(outpath + "/" + elem + "/" + elem + ".g.vcf.gz") for elem in sample_id)
 
 seed = random.randint(10000, 99999)
 
@@ -71,11 +55,11 @@ run_name=os.path.basename(inpath)
 mate_ids = ["R1","R2"]
 
 #Déclaration des sorties
+#trimmomatic = expand((output_path+"/{sample_id}/{sample_id}_R1_paired.fq.gz", output_path+"/{sample_id}/{sample_id}_R2_paired.fq.gz", output_path+"/{sample_id}/{sample_id}_R1_unpaired_trim.fq.gz", output_path+"/{sample_id}/{sample_id}_R2_unpaired_trim.fq.gz"), sample_id = sample_ids),
 #fastqc = expand(outpath+"/multiqc/{sample_id}_L001_001_fastqc.html", outpath+"/multiqc/{sample_id}_L001_001_fastqc.zip", sample_id=sample_id)
 multiqc = (outpath+"/multiqc/multiqc_report.html")
 #ubam = expand(outpath+"/{sample_id}/{sample_id}.unaligned.bam", sample_id=sample_id)
 #bwa_mem = expand(outpath+"/{sample_id}/{sample_id}_bwa_mem.bam", sample_id=sample_id)
-#bwa_mem_fasta = expand(outpath+"/{ref_id}/{ref_id}_bwa_mem.bam", ref_id=ref_ids)
 #markilluminaadapters = expand((outpath+"/{sample_id}/{sample_id}_markilluminaadapters.bam", outpath+"/{sample_id}/{sample_id}_markilluminaadapters_metrics.txt"), sample_id = sample_id)
 #addorreplacereadgroups = expand((outpath+"/{sample_id}/{sample_id}.readgroups_unmapped.bam"), sample_id = sample_id)
 #samtofastq = expand((outpath+"/{sample_id}/{sample_id}.fastq"), sample_id = sample_id)
@@ -84,11 +68,8 @@ multiqc = (outpath+"/multiqc/multiqc_report.html")
 #mergebamalignment = expand((outpath+"/{sample_id}/{sample_id}.sorted.bam"), sample_id = sample_id)
 #samtools_sort = expand((outpath+"/{ref_id}/{ref_id}.sorted.bam"), ref_id = ref_id)
 #markduplicates = expand((outpath+"/{sample_id}/{sample_id}.mark_duplicates.bam", outpath+"/{sample_id}/{sample_id}.mark_duplicates.metrics"), sample_id = sample_id)
-#markduplicates_fasta = expand((outpath+"/{ref_id}/{ref_id}.mark_duplicates.bam", outpath+"/{ref_id}/{ref_id}.mark_duplicates.metrics"), ref_id = ref_id)
 #reorderbam = expand((outpath+"/{sample_id}/{sample_id}.reordered.bam", outpath+"/{sample_id}/{sample_id}.reordered.bai"), sample_id =sample_id)
-#reorderbam_fasta = expand((outpath+"/{ref_id}/{ref_id}.reordered.bam", outpath+"/{ref_id}/{ref_id}.reordered.bai"), ref_id =ref_id)
 #haplotypecaller = expand((outpath+"/{sample_id}/{sample_id}.g.vcf.gz", outpath+"/{sample_id}/{sample_id}.g.vcf.gz.tbi"), sample_id =sample_id)
-#haplotypecaller_fasta = expand((outpath+"/{ref_id}/{ref_id}.g.vcf.gz", outpath+"/{ref_id}/{ref_id}.g.vcf.gz.tbi"), ref_id =ref_id)
 #combinegvcfs = (outpath+"/combined_gvcfs.vcf.gz", outpath+"/combined_gvcfs.vcf.gz.tbi")
 #genotypegvcfs = (outpath+"/genotyped_gvcfs.vcf.gz", outpath+"/genotyped_gvcfs.vcf.gz.tbi")
 #hardfiltration = (outpath+"/indels_filtered.vcf.gz", outpath+"/snps_filtered.vcf.gz", outpath+"/"+run_name+".hard_filtered.vcf.gz)
@@ -101,11 +82,11 @@ iqtree = (outpath+"/iqtree_bestTree."+run_name) #   -------------- à compléter
 
 rule all:
 	input:
+#		trimmomatic,
 #		fastqc,
 		multiqc,
 #		ubam,
 #		bwa_mem,
-#		bwa_mem_fasta,
 #		markilluminaadapters,
 #		addorreplacereadgroups,
 #		samtofastq,
@@ -114,11 +95,8 @@ rule all:
 #		mergebamalignment,
 #		samtools_sort,
 #		markduplicates,
-#		markduplicates_fasta,
 #		reorderbam,
-#		reorderbam_fasta,
 #		haplotypecaller,
-#		haplotypecaller_fasta,
 #		combinegvcfs,
 #		genotypegvcfs,
 #		hardfiltration,
@@ -131,7 +109,7 @@ rule all:
 		"touch "+outpath+"/done"
 
 """
-#rule trimmomatic:
+rule trimmomatic:
 	input:
 		R1 = inpath+"{sample_id}_L001_R1_001.fastq.gz",
 		R2 = inpath+"{sample_id}_L001_R2_001.fastq.gz"
@@ -153,7 +131,7 @@ rule all:
 		{output.R2} {output.R2u} \
 		{params.trim_params}'
 
-#rule fastqc :
+rule fastqc :
 	input : 	
 		R1 = outpath+"{sample_id}/{sample_id}_R1_cut.fastq.gz",
 		R2 = outpath+"{sample_id}/{sample_id}_R2_cut.fastq.gz",
@@ -170,7 +148,22 @@ rule all:
 		'fastqc {input.R1} {input.R2} -a {input.adapters} -o ' + outpath + '{wildcards.sample_id}/fastqc_after/'
 
 """
+
+rule trimmomatic:
+	output: 
+		R1 = outpath+"{sample_id}/{sample_id}_R1_paired.fastq.gz",
+		R1u = outpath+"{sample_id}/{sample_id}_R1_unpaired_trim.fastq.gz"
+	log:
+		outpath+"/logs/{sample_id}_trimmomatic.log"
+	params:
+		trim_options = config["trimmomatic"]["OPTIONS"],
+		trim_params = config["trimmomatic"]["PARAMS"],
+	shell:
+		'java -jar /home/julien/miniconda3/pkgs/trimmomatic-0.39-hdfd78af_2/share/trimmomatic-0.39-2/trimmomatic.jar {params.trim_options} {inpath}/{wildcards.sample_id}_L001_001.fastq.gz {output.R1} {output.R1u} {params.trim_params}'
+
 rule fastqc:
+	input: 
+		outpath+"{sample_id}/{sample_id}_R1_paired.fastq.gz"
 	output:
 		html = outpath+"/multiqc/{sample_id}_L001_001_fastqc.html",
 		zip = outpath+"/multiqc/{sample_id}_L001_001_fastqc.zip"
@@ -178,7 +171,7 @@ rule fastqc:
 		outpath+"/logs/{sample_id}.fastqc.log"
 	
 	shell :
-		'fastqc -o {outpath}/multiqc {inpath}/{wildcards.sample_id}_L001_001.fastq.gz 2> {log}'
+		'fastqc -o {outpath}/multiqc {input} 2> {log}'
 
 rule multiqc:
 	input:
@@ -193,12 +186,14 @@ rule multiqc:
 		'multiqc -f -o {outpath}/multiqc/ {outpath}/multiqc/ --filename multiqc_report.html 2> {log}'
 
 rule ubam:
+	input: 
+		outpath+"{sample_id}/{sample_id}_R1_paired.fastq.gz"
 	output:
 		temp(outpath+"/{sample_id}/{sample_id}.unaligned.bam")
 	log:
 		outpath+"/logs/{sample_id}.fastqtosam.log"
 	shell:
-		'picard FastqToSam FASTQ={inpath}/{wildcards.sample_id}_L001_001.fastq.gz OUTPUT={output} READ_GROUP_NAME=1 SAMPLE_NAME={wildcards.sample_id} LIBRARY_NAME=lib_{wildcards.sample_id} PLATFORM_UNIT=unit1 PLATFORM=ILLUMINA'
+		'picard FastqToSam FASTQ={input} OUTPUT={output} READ_GROUP_NAME=1 SAMPLE_NAME={wildcards.sample_id} LIBRARY_NAME=lib_{wildcards.sample_id} PLATFORM_UNIT=unit1 PLATFORM=ILLUMINA'
 
 """
 rule bwa_mem : 
@@ -216,6 +211,8 @@ rule bwa_mem :
 """
 
 rule bwa_mem:
+	input: 
+		outpath+"{sample_id}/{sample_id}_R1_paired.fastq.gz"
 	output:
 		temp(outpath+"/{sample_id}/{sample_id}_align.bam")
 	params:
@@ -224,18 +221,7 @@ rule bwa_mem:
 	log:
 		outpath+"/logs/{sample_id}.bwamem.log"
 	shell:
-		'bwa mem {params.options} {params.bwamem_db} {inpath}/{wildcards.sample_id}_L001_001.fastq.gz 2> {log} > {output}'
-
-rule bwa_mem_fasta:
-	output:
-		temp(outpath+"/{ref_id}/{ref_id}_align_fasta.sam")
-	params:
-		ref = config["bwamem"]["DB"],
-		options = config["bwamem"]["OPTIONS"]
-	log:
-		outpath+"/logs/{ref_id}.bwamem.log"
-	shell:
-		"bwa mem {params.options} -M -R '@RG\\tID:FLOWCELL_{wildcards.ref_id}\\tSM:{wildcards.ref_id}\\tPL:ILLUMINA\\tLB:LIB_{wildcards.ref_id}' -p {params.ref} {fastapath}/{wildcards.ref_id}.fna.gz 2> {log} > {output}"
+		'bwa mem {params.options} {params.bwamem_db} {input} 2> {log} > {output}'
 
 rule markilluminaadapters:
 	input:
@@ -325,17 +311,6 @@ rule markduplicates:
 	shell:
 		'picard MarkDuplicates I={input} O={output.bam} M={output.metrics_duplicates} 2> {log}'
 
-rule markduplicates_fasta:
-	input:
-		outpath+"/{ref_id}/{ref_id}.sorted_fasta.bam"
-	output:
-		bam = temp(outpath+"/{ref_id}/{ref_id}.marked_duplicates_fasta.bam"),
-		metrics_duplicates = outpath+"/{ref_id}/{ref_id}.marked_duplicates_fasta.metrics"
-	log:
-		outpath+"/logs/{ref_id}.markduplicates.log"
-	shell:
-		'picard MarkDuplicates I={input} O={output.bam} M={output.metrics_duplicates} 2> {log}'
-
 rule reorderbam:
 	input:
 		outpath+"/{sample_id}/{sample_id}.marked_duplicates.bam"
@@ -346,20 +321,6 @@ rule reorderbam:
 		ref = config["bwamem"]["DB"]
 	log:
 		outpath+"/logs/{sample_id}.reorderbam.log"
-	run:
-		shell('picard ReorderSam INPUT={input} OUTPUT={output.bam} REFERENCE={params.ref} 2> {log}')
-		shell('picard BuildBamIndex I={output.bam}')
-
-rule reorderbam_fasta:
-	input:
-		outpath+"/{ref_id}/{ref_id}.marked_duplicates_fasta.bam"
-	output:
-		bam = outpath+"/{ref_id}/{ref_id}.reordered_fasta.bam",
-		bai = outpath+"/{ref_id}/{ref_id}.reordered_fasta.bai"
-	params:
-		ref = config["bwamem"]["DB"]
-	log:
-		outpath+"/logs/{ref_id}.reorderbam.log"
 	run:
 		shell('picard ReorderSam INPUT={input} OUTPUT={output.bam} REFERENCE={params.ref} 2> {log}')
 		shell('picard BuildBamIndex I={output.bam}')
@@ -378,50 +339,20 @@ rule haplotypecaller:
 	shell:
 		'gatk HaplotypeCaller -R {params.ref} -I {input.bam} -O {output.gvcf} -ERC GVCF -ploidy 1 2> {log}'
 
-rule haplotypecaller_fasta:
+
+rule combinegvcfs: #rassemblement de tous les échantillons
 	input:
-		bam = outpath+"/{ref_id}/{ref_id}.reordered_fasta.bam",
-		bai = outpath+"/{ref_id}/{ref_id}.reordered_fasta.bai"
+		gvcf = expand(outpath+"/{sample_id}/{sample_id}.g.vcf.gz", sample_id = sample_id),
+		gvcf_index = expand(outpath+"/{sample_id}/{sample_id}.g.vcf.gz.tbi", sample_id = sample_id)
 	output:
-		gvcf = temp(outpath+"/{ref_id}/{ref_id}.g.vcf_fasta.gz"),
-		gvcf_index = temp(outpath+"/{ref_id}/{ref_id}.g.vcf_fasta.gz.tbi")
+		gvcf = temp(outpath+"/combined_gvcfs.vcf.gz"),
+		gvcf_index = temp(outpath+"/combined_gvcfs.vcf.gz.tbi")
 	params:
 		ref = config["bwamem"]["DB"]
 	log:
-		outpath+"/logs/{ref_id}.haplotypecaller.log"
+		outpath+"/logs/combinegvcfs.log"
 	shell:
-		'gatk HaplotypeCaller -R {params.ref} -I {input.bam} -O {output.gvcf} -ERC GVCF -ploidy 1 2> {log}'
-
-if num_fasta_files == 0 :
-	rule combinegvcfs: #rassemblement de tous les échantillons
-		input:
-			gvcf = expand(outpath+"/{sample_id}/{sample_id}.g.vcf.gz", sample_id = sample_id),
-			gvcf_index = expand(outpath+"/{sample_id}/{sample_id}.g.vcf.gz.tbi", sample_id = sample_id)
-		output:
-			gvcf = temp(outpath+"/combined_gvcfs.vcf.gz"),
-			gvcf_index = temp(outpath+"/combined_gvcfs.vcf.gz.tbi")
-		params:
-			ref = config["bwamem"]["DB"]
-		log:
-			outpath+"/logs/combinegvcfs.log"
-		shell:
-			'gatk CombineGVCFs -R {params.ref} -O {output.gvcf} --variant {variants} 2> {log}'
-else:
-	rule combinegvcfs: #rassemblement de tous les échantillons
-		input:
-			gvcf = expand(outpath+"/{sample_id}/{sample_id}.g.vcf.gz", sample_id = sample_id),
-			gvcf_index = expand(outpath+"/{sample_id}/{sample_id}.g.vcf.gz.tbi", sample_id = sample_id),
-			gvcf_fasta = expand(outpath+"/{ref_id}/{ref_id}.g.vcf_fasta.gz", ref_id = ref_id),
-			gvcf_index_fasta = expand(outpath+"/{ref_id}/{ref_id}.g.vcf_fasta.gz.tbi", ref_id = ref_id)
-		output:
-			gvcf = temp(outpath+"/combined_gvcfs.vcf.gz"),
-			gvcf_index = temp(outpath+"/combined_gvcfs.vcf.gz.tbi")
-		params:
-			ref = config["bwamem"]["DB"]
-		log:
-			outpath+"/logs/combinegvcfs.log"
-		shell:
-			'gatk CombineGVCFs -R {params.ref} -O {output.gvcf} --variant {variants} 2> {log}'
+		'gatk CombineGVCFs -R {params.ref} -O {output.gvcf} --variant {variants} 2> {log}'
 
 rule genotypegvcfs:
 	input:
