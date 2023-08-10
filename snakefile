@@ -13,7 +13,6 @@
 #bwa v0.7.17 (conda)
 #samtools v1.6 (conda)
 #bcftools v1.9 (conda)
-#mafft v7.310 (conda)
 #iqtree v2.0.3 (conda)
 #fastqc v0.11.9 (conda)
 #multiqc v1.14 (pip install)
@@ -77,8 +76,7 @@ multiqc = (outpath+"/multiqc/multiqc_report.html")
 #costumevcffilter = (outpath+"/"+run_name+".filtered_SNPs_GQ50_AD08_DP10.vcf", outpath+"/"+run_name+".variant_qc_genotype_filter.tsv")
 #vcftofasta = (outpath+"/"+run_name+".vcftofasta.fasta")
 #mafft = (outpath+"/"+run_name+".local_alignment.fasta")
-iqtree = (outpath+"/iqtree_bestTree."+run_name) #   -------------- à compléter
-
+iqtree = (outpath+"/"+run_name+".treefile")
 
 rule all:
 	input:
@@ -151,19 +149,16 @@ rule fastqc :
 
 rule trimmomatic:
 	output: 
-		R1 = outpath+"{sample_id}/{sample_id}_R1_paired.fastq.gz",
-		R1u = outpath+"{sample_id}/{sample_id}_R1_unpaired_trim.fastq.gz"
+		outpath+"/{sample_id}/{sample_id}_R1_paired.fastq.gz"
 	log:
 		outpath+"/logs/{sample_id}_trimmomatic.log"
 	params:
 		trim_options = config["trimmomatic"]["OPTIONS"],
 		trim_params = config["trimmomatic"]["PARAMS"],
 	shell:
-		'java -jar /home/julien/miniconda3/pkgs/trimmomatic-0.39-hdfd78af_2/share/trimmomatic-0.39-2/trimmomatic.jar {params.trim_options} {inpath}/{wildcards.sample_id}_L001_001.fastq.gz {output.R1} {output.R1u} {params.trim_params}'
+		'trimmomatic {params.trim_options} {inpath}/{wildcards.sample_id}_L001_001.fastq.gz {output} {params.trim_params} 2> {log}'
 
 rule fastqc:
-	input: 
-		outpath+"{sample_id}/{sample_id}_R1_paired.fastq.gz"
 	output:
 		html = outpath+"/multiqc/{sample_id}_L001_001_fastqc.html",
 		zip = outpath+"/multiqc/{sample_id}_L001_001_fastqc.zip"
@@ -171,7 +166,7 @@ rule fastqc:
 		outpath+"/logs/{sample_id}.fastqc.log"
 	
 	shell :
-		'fastqc -o {outpath}/multiqc {input} 2> {log}'
+		'fastqc -o {outpath}/multiqc {inpath}/{wildcards.sample_id}_L001_001.fastq.gz 2> {log}'
 
 rule multiqc:
 	input:
@@ -186,14 +181,12 @@ rule multiqc:
 		'multiqc -f -o {outpath}/multiqc/ {outpath}/multiqc/ --filename multiqc_report.html 2> {log}'
 
 rule ubam:
-	input: 
-		outpath+"{sample_id}/{sample_id}_R1_paired.fastq.gz"
 	output:
 		temp(outpath+"/{sample_id}/{sample_id}.unaligned.bam")
 	log:
 		outpath+"/logs/{sample_id}.fastqtosam.log"
 	shell:
-		'picard FastqToSam FASTQ={input} OUTPUT={output} READ_GROUP_NAME=1 SAMPLE_NAME={wildcards.sample_id} LIBRARY_NAME=lib_{wildcards.sample_id} PLATFORM_UNIT=unit1 PLATFORM=ILLUMINA'
+		'picard FastqToSam FASTQ={inpath}/{wildcards.sample_id}_L001_001.fastq.gz OUTPUT={output} READ_GROUP_NAME=1 SAMPLE_NAME={wildcards.sample_id} LIBRARY_NAME=lib_{wildcards.sample_id} PLATFORM_UNIT=unit1 PLATFORM=ILLUMINA'
 
 """
 rule bwa_mem : 
@@ -211,8 +204,6 @@ rule bwa_mem :
 """
 
 rule bwa_mem:
-	input: 
-		outpath+"{sample_id}/{sample_id}_R1_paired.fastq.gz"
 	output:
 		temp(outpath+"/{sample_id}/{sample_id}_align.bam")
 	params:
@@ -221,7 +212,7 @@ rule bwa_mem:
 	log:
 		outpath+"/logs/{sample_id}.bwamem.log"
 	shell:
-		'bwa mem {params.options} {params.bwamem_db} {input} 2> {log} > {output}'
+		'bwa mem {params.options} {params.bwamem_db} {inpath}/{wildcards.sample_id}_L001_001.fastq.gz 2> {log} > {output}'
 
 rule markilluminaadapters:
 	input:
@@ -423,12 +414,12 @@ rule iqtree:
 	input:
 		outpath+"/"+run_name+".vcftofasta.fasta"
 	output:
-		outpath+"/iqtree_bestTree."+run_name
+		outpath+"/"+run_name+".treefile"
 	params:
 		options = config["iqtree"]["OPTIONS"]
 	log:
 		outpath+"/logs/iqtree.log"
 	run:
 		shell("sed 's/\*/N/g' {input} > {outpath}/data_corrected.fasta")
-		shell('iqtree -s {outpath}/data_corrected.fasta {params.options} -pre {outpath} 2> {log}')
+		shell('iqtree -s {outpath}/data_corrected.fasta {params.options} -pre {outpath}/{run_name} 2> {log}')
 		#shell('echo {seed} > {outpath}/seed.txt')

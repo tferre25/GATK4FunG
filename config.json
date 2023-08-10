@@ -1,18 +1,18 @@
 {
 	"general_path": {
-		"INPUT_PATH" : "/home/julien/Documents/Parasito/data",
-		"OUTPUT_PATH" : "/home/julien/Documents/Parasito/output_iqtree_ref",
-		"filterGatkGenotypes_PATH" : "/home/julien/Documents/Parasito/Reference",
-		"vcfToFasta_PATH" : "/home/julien/Documents/Parasito/Reference",
-		"REF_PATH" : "/home/julien/Documents/Parasito/ref_fasta"
+		"INPUT_PATH" : "/home/julien/Documents/parasito/data",
+		"OUTPUT_PATH" : "/home/julien/Documents/parasito/output_test",
+		"filterGatkGenotypes_PATH" : "/home/julien/Documents/parasito/Reference",
+		"vcfToFasta_PATH" : "/home/julien/Documents/parasito/Reference",
+		"REF_PATH" : "/home/julien/Documents/parasito/ref_fasta"
 	},
 	"trimmomatic": {
-		"OPTIONS" : "PE -threads 3",
+		"OPTIONS" : "SE -threads 6",
 		"PARAMS" : "SLIDINGWINDOW:4:25"
 	},
 	"bwamem": {
 		"OPTIONS" : "-t 8",
-		"DB" : "/home/julien/Documents/Parasito/Reference/GCF_002775015.1_Cand_auris_B11221_V1_genomic.fna"
+		"DB" : "/home/julien/Documents/parasito/Reference/GCF_002775015.1_Cand_auris_B11221_V1_genomic.fna"
 	},
 	"iqtree": {
 		"OPTIONS" : "-bb 1000 -nt 8 -wbt"
