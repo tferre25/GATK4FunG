@@ -108,9 +108,6 @@ rule all:
 
 """
 rule trimmomatic:
-	input:
-		R1 = inpath+"{sample_id}_L001_R1_001.fastq.gz",
-		R2 = inpath+"{sample_id}_L001_R2_001.fastq.gz"
 	output: 
 		R1 = outpath+"{sample_id}/{sample_id}_R1_trim.fastq.gz",
 		R2 = outpath+"{sample_id}/{sample_id}_R2_trim.fastq.gz",
