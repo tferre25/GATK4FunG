@@ -106,44 +106,36 @@ rule all:
 	shell:
 		"touch "+outpath+"/done"
 
-"""
+rule get_sample:
+	
+
 rule trimmomatic:
 	output: 
-		R1 = outpath+"{sample_id}/{sample_id}_R1_trim.fastq.gz",
-		R2 = outpath+"{sample_id}/{sample_id}_R2_trim.fastq.gz",
-		R1u = outpath+"{sample_id}/{sample_id}_R1_unpaired_trim.fastq.gz",
-		R2u = outpath+"{sample_id}/{sample_id}_R2_unpaired_trim.fastq.gz",
+		R1 = outpath+"/{sample_id}/{sample_id}_R1_trim.fastq.gz",
+		R2 = outpath+"/{sample_id}/{sample_id}_R2_trim.fastq.gz",
+		R1u = outpath+"/{sample_id}/{sample_id}_R1_unpaired_trim.fastq.gz",
+		R2u = outpath+"/{sample_id}/{sample_id}_R2_unpaired_trim.fastq.gz",
 	log:
-		"logs/{sample_id}.trimmomatic.log"
+		outpath+"/logs/{sample_id}_trimmomatic.log"
 	params:
 		trim_options = config["trimmomatic"]["OPTIONS"],
 		trim_params = config["trimmomatic"]["PARAMS"],
 	shell:
-		'java -jar /home/julien/miniconda3/pkgs/trimmomatic-0.39-hdfd78af_2/share/trimmomatic-0.39-2/trimmomatic.jar \
-		{params.trim_options} \
-		{input.R1} {input.R2} \
-		{output.R1} {output.R1u} \
-		{output.R2} {output.R2u} \
-		{params.trim_params}'
+		'trimmomatic {params.trim_options} {input.R1} {input.R2} {output.R1} {output.R1u} {output.R2} {output.R2u} {params.trim_params}' #### Changer les inputs
 
-rule fastqc :
-	input : 	
-		R1 = outpath+"{sample_id}/{sample_id}_R1_cut.fastq.gz",
-		R2 = outpath+"{sample_id}/{sample_id}_R2_cut.fastq.gz",
-		adapters = "/home/julien/Documents/Virologie/Data/adapters_230721_fastqc.txt"
-	output :
+rule fastqc:
+	output:
 		htmlfileR1 = outpath+"{sample_id}/fastqc_after/{sample_id}_R1_cut_fastqc.html",
 		zipfileR1 = outpath+"{sample_id}/fastqc_after/{sample_id}_R1_cut_fastqc.zip",
 		htmlfileR2 = outpath+"{sample_id}/fastqc_after/{sample_id}_R2_cut_fastqc.html",
 		zipfileR2 = outpath+"{sample_id}/fastqc_after/{sample_id}_R2_cut_fastqc.zip"
 	log : 
-		"logs/{sample_id}.fastqc.log"
+		outpath+"/logs/{sample_id}.fastqc.log"
 	
 	shell :
-		'fastqc {input.R1} {input.R2} -a {input.adapters} -o ' + outpath + '{wildcards.sample_id}/fastqc_after/'
+		'fastqc -o {outpath}/multiqc {input.R1} {input.R2} 2> {log}'  #### Changer les inputs
 
 """
-
 rule trimmomatic:
 	output: 
 		outpath+"/{sample_id}/{sample_id}_R1_paired.fastq.gz"
@@ -164,7 +156,7 @@ rule fastqc:
 	
 	shell :
 		'fastqc -o {outpath}/multiqc {inpath}/{wildcards.sample_id}_L001_001.fastq.gz 2> {log}'
-
+"""
 rule multiqc:
 	input:
 		html = expand(outpath+"/multiqc/{sample_id}_L001_001_fastqc.html", sample_id = sample_id),
