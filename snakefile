@@ -38,11 +38,11 @@ vcftofasta = config["general_path"]["vcfToFasta_PATH"]
 sample_id = []
 sampleName=glob.glob(inpath+"/*.fastq.gz")
 for name in sampleName:
-    name = name.replace(inpath+"/", '')
-    a = re.split('/', name)
-    name = a[0]
-    name = name.replace('_L001_001.fastq.gz', '')
-    sample_id.append(name)
+	name = name.replace("./", '')
+	a = re.split('/', name)
+	name = a[0]
+	name = name.replace('_1.fastq.gz', '')
+	sample_id.append(name)
 
 variants = ' --variant '.join(str(outpath + "/" + elem + "/" + elem + ".g.vcf.gz") for elem in sample_id)
 
