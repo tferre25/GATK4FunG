@@ -7,7 +7,7 @@
 		"REF_PATH" : "/home/julien/Documents/parasito/ref_fasta"
 	},
 	"trimmomatic": {
-		"OPTIONS" : "SE -threads 6",
+		"OPTIONS" : "PE -threads 6",
 		"PARAMS" : "SLIDINGWINDOW:4:25"
 	},
 	"bwamem": {

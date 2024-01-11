@@ -6,7 +6,7 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - python=3.6
+  - python=3.8
   - snakemake=3.13.3
   - picard=2.18.29
   - gatk4=4.3.0.0

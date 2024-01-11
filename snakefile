@@ -38,7 +38,7 @@ vcftofasta = config["general_path"]["vcfToFasta_PATH"]
 sample_id = []
 sampleName=glob.glob(inpath+"/*.fastq.gz")
 for name in sampleName:
-	name = name.replace("./", '')
+	name = name.replace(inpath+"/", '')
 	a = re.split('/', name)
 	name = a[0]
 	name = name.replace('_1.fastq.gz', '')
@@ -121,19 +121,22 @@ rule trimmomatic:
 		trim_options = config["trimmomatic"]["OPTIONS"],
 		trim_params = config["trimmomatic"]["PARAMS"],
 	shell:
-		'trimmomatic {params.trim_options} {input.R1} {input.R2} {output.R1} {output.R1u} {output.R2} {output.R2u} {params.trim_params}' #### Changer les inputs
+		'trimmomatic {params.trim_options} {input.R1} {input.R2} {output.R1} {output.R1u} {output.R2} {output.R2u} {params.trim_params}'
 
 rule fastqc:
+	input:
+		R1 = outpath+"/{sample_id}/{sample_id}_R1_trim.fastq.gz",
+		R2 = outpath+"/{sample_id}/{sample_id}_R2_trim.fastq.gz"
 	output:
-		htmlfileR1 = outpath+"{sample_id}/fastqc_after/{sample_id}_R1_cut_fastqc.html",
-		zipfileR1 = outpath+"{sample_id}/fastqc_after/{sample_id}_R1_cut_fastqc.zip",
-		htmlfileR2 = outpath+"{sample_id}/fastqc_after/{sample_id}_R2_cut_fastqc.html",
-		zipfileR2 = outpath+"{sample_id}/fastqc_after/{sample_id}_R2_cut_fastqc.zip"
+		htmlfileR1 = outpath+"/multiqc/{sample_id}_R1_trim_fastqc.html",
+		zipfileR1 = outpath+"/multiqc/{sample_id}_R1_trim_fastqc.zip",
+		htmlfileR2 = outpath+"/multiqc/{sample_id}_R2_trim_fastqc.html",
+		zipfileR2 = outpath+"/multiqc/{sample_id}_R2_trim_fastqc.zip"
 	log : 
 		outpath+"/logs/{sample_id}.fastqc.log"
 	
 	shell :
-		'fastqc -o {outpath}/multiqc {input.R1} {input.R2} 2> {log}'  #### Changer les inputs
+		'fastqc -o {outpath}/multiqc {input.R1} {input.R2} 2> {log}'
 
 """
 rule trimmomatic:
@@ -170,6 +173,18 @@ rule multiqc:
 		'multiqc -f -o {outpath}/multiqc/ {outpath}/multiqc/ --filename multiqc_report.html 2> {log}'
 
 rule ubam:
+	input:
+		R1 = outpath+"/{sample_id}/{sample_id}_R1_trim.fastq.gz",
+		R2 = outpath+"/{sample_id}/{sample_id}_R2_trim.fastq.gz"
+	output:
+		temp(outpath+"/{sample_id}/{sample_id}.unaligned.bam")
+	log:
+		outpath+"/logs/{sample_id}.fastqtosam.log"
+	shell:
+		'picard FastqToSam FASTQ={input.R1} FASTQ2={input.R2} OUTPUT={output} READ_GROUP_NAME=1 SAMPLE_NAME={wildcards.sample_id} LIBRARY_NAME=lib_{wildcards.sample_id} PLATFORM_UNIT=unit1 PLATFORM=ILLUMINA'
+
+"""
+rule ubam:
 	output:
 		temp(outpath+"/{sample_id}/{sample_id}.unaligned.bam")
 	log:
@@ -177,7 +192,18 @@ rule ubam:
 	shell:
 		'picard FastqToSam FASTQ={inpath}/{wildcards.sample_id}_L001_001.fastq.gz OUTPUT={output} READ_GROUP_NAME=1 SAMPLE_NAME={wildcards.sample_id} LIBRARY_NAME=lib_{wildcards.sample_id} PLATFORM_UNIT=unit1 PLATFORM=ILLUMINA'
 
+rule bwa_mem:
+	output:
+		temp(outpath+"/{sample_id}/{sample_id}_align.bam")
+	params:
+		bwamem_db = config["bwamem"]["DB"],
+		options = config["bwamem"]["OPTIONS"]
+	log:
+		outpath+"/logs/{sample_id}.bwamem.log"
+	shell:
+		'bwa mem {params.options} {params.bwamem_db} {inpath}/{wildcards.sample_id}_L001_001.fastq.gz 2> {log} > {output}'
 """
+
 rule bwa_mem : 
 	input : 
 		R1 = outpath+"{sample_id}/{sample_id}_R1_cut.fastq.gz",
@@ -190,18 +216,6 @@ rule bwa_mem :
 		"logs/{sample_id}.bwamem.log"
 	shell : 
 		'bwa mem {params.bwamem_db} {input.R1} {input.R2} > {output}'
-"""
-
-rule bwa_mem:
-	output:
-		temp(outpath+"/{sample_id}/{sample_id}_align.bam")
-	params:
-		bwamem_db = config["bwamem"]["DB"],
-		options = config["bwamem"]["OPTIONS"]
-	log:
-		outpath+"/logs/{sample_id}.bwamem.log"
-	shell:
-		'bwa mem {params.options} {params.bwamem_db} {inpath}/{wildcards.sample_id}_L001_001.fastq.gz 2> {log} > {output}'
 
 rule markilluminaadapters:
 	input:
