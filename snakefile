@@ -206,20 +206,20 @@ rule bwa_mem:
 
 rule bwa_mem : 
 	input : 
-		R1 = outpath+"{sample_id}/{sample_id}_R1_cut.fastq.gz",
-		R2 = outpath+"{sample_id}/{sample_id}_R2_cut.fastq.gz"
+		R1 = outpath+"{sample_id}/{sample_id}_R1_trim.fastq.gz",
+		R2 = outpath+"{sample_id}/{sample_id}_R2_trim.fastq.gz"
 	output : 
-		outpath+"{sample_id}/{sample_id}_alignIa.sam"
+		outpath+"{sample_id}/{sample_id}_align.sam"
 	params:
 		bwamem_db = config["bwamem"]["DB"]
 	log :
 		"logs/{sample_id}.bwamem.log"
 	shell : 
-		'bwa mem {params.bwamem_db} {input.R1} {input.R2} > {output}'
+		'bwa mem {params.options} {params.bwamem_db} {input.R1} {input.R2} 2> {log} > {output}'
 
 rule markilluminaadapters:
 	input:
-		outpath+"/{sample_id}/{sample_id}_align.bam"
+		outpath+"/{sample_id}/{sample_id}_align.sam"
 	output:
 		bam = temp(outpath+"/{sample_id}/{sample_id}_markilluminaadapters.bam"),
 		metrics_adapters = outpath+"/{sample_id}/{sample_id}_markilluminaadapters_metrics.txt"
