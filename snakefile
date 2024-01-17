@@ -238,6 +238,7 @@ rule addorreplacereadgroups:
 	shell: 
 		'picard AddOrReplaceReadGroups I={input} O={outpath}/{wildcards.sample_id}/{wildcards.sample_id}.readgroups_unmapped.bam ID=FLOWCELL_{wildcards.sample_id} LB=LIB_{wildcards.sample_id} PL=ILLUMINA SM={wildcards.sample_id} PU=unit1 2> {log}'
 
+"""
 rule samtofastq:
 	input:
 		outpath+"/{sample_id}/{sample_id}_markilluminaadapters.bam"
@@ -247,6 +248,18 @@ rule samtofastq:
 		outpath+"/logs/{sample_id}.samtofastq.log"
 	shell:
 		'picard SamToFastq I={input} FASTQ={output} CLIP_ATTR=XT CLIP_ACT=2 INTER=true NON_PF=true 2> {log}'
+"""
+
+rule samtofastq:
+	input:
+		outpath+"/{sample_id}/{sample_id}_align.sam"
+	output:
+		R1 = temp(outpath+"/{sample_id}/{sample_id}_R1.fastq"),
+		R2 = temp(outpath+"/{sample_id}/{sample_id}_R2.fastq")
+	log:
+		outpath+"/logs/{sample_id}.samtofastq.log"
+	shell:
+		'picard SamToFastq I={input} FASTQ={output.R1} SECOND_END_FASTQ={output.R2} CLIP_ATTR=XT CLIP_ACT=2 NON_PF=true 2> {log}'
 
 rule bwa_mem2:
 	input:
