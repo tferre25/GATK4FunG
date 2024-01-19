@@ -29,7 +29,6 @@ import os
 #Paths
 inpath = config["general_path"]["INPUT_PATH"]
 outpath = config["general_path"]["OUTPUT_PATH"]
-fastapath = config["general_path"]["REF_PATH"]
 filterGatkGenotypes = config["general_path"]["filterGatkGenotypes_PATH"]
 vcftofasta = config["general_path"]["vcfToFasta_PATH"]
 
@@ -107,8 +106,93 @@ rule all:
 		"touch "+outpath+"/done"
 
 rule get_sample:
-	
+"""
+rule trimmomatic:
+	output: 
+		outpath+"/{sample_id}/{sample_id}_R1_paired.fastq.gz"
+	log:
+		outpath+"/logs/{sample_id}_trimmomatic.log"
+	params:
+		trim_options = config["trimmomatic"]["OPTIONS"],
+		trim_params = config["trimmomatic"]["PARAMS"],
+	shell:
+		'trimmomatic {params.trim_options} {inpath}/{wildcards.sample_id}_L001_001.fastq.gz {output} {params.trim_params} 2> {log}'
 
+rule fastqc:
+	output:
+		html = outpath+"/multiqc/{sample_id}_L001_001_fastqc.html",
+		zip = outpath+"/multiqc/{sample_id}_L001_001_fastqc.zip"
+	log:
+		outpath+"/logs/{sample_id}.fastqc.log"
+	
+	shell :
+		'fastqc -o {outpath}/multiqc {inpath}/{wildcards.sample_id}_L001_001.fastq.gz 2> {log}'
+
+rule ubam:
+	output:
+		temp(outpath+"/{sample_id}/{sample_id}.unaligned.bam")
+	log:
+		outpath+"/logs/{sample_id}.fastqtosam.log"
+	shell:
+		'picard FastqToSam FASTQ={inpath}/{wildcards.sample_id}_L001_001.fastq.gz OUTPUT={output} READ_GROUP_NAME=1 SAMPLE_NAME={wildcards.sample_id} LIBRARY_NAME=lib_{wildcards.sample_id} PLATFORM_UNIT=unit1 PLATFORM=ILLUMINA'
+
+rule bwa_mem:
+	output:
+		temp(outpath+"/{sample_id}/{sample_id}_align.bam")
+	params:
+		bwamem_db = config["bwamem"]["DB"],
+		options = config["bwamem"]["OPTIONS"]
+	log:
+		outpath+"/logs/{sample_id}.bwamem.log"
+	shell:
+		'bwa mem {params.options} {params.bwamem_db} {inpath}/{wildcards.sample_id}_L001_001.fastq.gz 2> {log} > {output}'
+
+rule bwa_mem : 
+	input : 
+		R1 = outpath+"{sample_id}/{sample_id}_R1_trim.fastq.gz",
+		R2 = outpath+"{sample_id}/{sample_id}_R2_trim.fastq.gz"
+	output : 
+		outpath+"{sample_id}/{sample_id}_align.sam"
+	params:
+		bwamem_db = config["bwamem"]["DB"]
+	log :
+		"logs/{sample_id}.bwamem.log"
+	shell : 
+		'bwa mem {params.options} {params.bwamem_db} {input.R1} {input.R2} 2> {log} > {output}'
+
+rule markilluminaadapters:
+	input:
+		outpath+"/{sample_id}/{sample_id}_align.sam"
+	output:
+		bam = temp(outpath+"/{sample_id}/{sample_id}_markilluminaadapters.bam"),
+		metrics_adapters = outpath+"/{sample_id}/{sample_id}_markilluminaadapters_metrics.txt"
+	log:
+		outpath+"/logs/{sample_id}.markilluminaadapters.log"
+	shell:
+		'picard MarkIlluminaAdapters INPUT={input} OUTPUT={output.bam} METRICS={output.metrics_adapters} 2> {log}'
+
+rule samtofastq:
+	input:
+		outpath+"/{sample_id}/{sample_id}_markilluminaadapters.bam"
+	output:
+		temp(outpath+"/{sample_id}/{sample_id}.fastq")
+	log:
+		outpath+"/logs/{sample_id}.samtofastq.log"
+	shell:
+		'picard SamToFastq I={input} FASTQ={output} CLIP_ATTR=XT CLIP_ACT=2 INTER=true NON_PF=true 2> {log}'
+
+
+rule samtofastq:
+	input:
+		outpath+"/{sample_id}/{sample_id}_align.sam"
+	output:
+		R1 = temp(outpath+"/{sample_id}/{sample_id}_R1.fastq"),
+		R2 = temp(outpath+"/{sample_id}/{sample_id}_R2.fastq")
+	log:
+		outpath+"/logs/{sample_id}.samtofastq.log"
+	shell:
+		'picard SamToFastq I={input} FASTQ={output.R1} SECOND_END_FASTQ={output.R2} CLIP_ATTR=XT CLIP_ACT=2 NON_PF=true 2> {log}'
+"""
 rule trimmomatic:
 	output: 
 		R1 = outpath+"/{sample_id}/{sample_id}_R1_trim.fastq.gz",
@@ -138,32 +222,10 @@ rule fastqc:
 	shell :
 		'fastqc -o {outpath}/multiqc {input.R1} {input.R2} 2> {log}'
 
-"""
-rule trimmomatic:
-	output: 
-		outpath+"/{sample_id}/{sample_id}_R1_paired.fastq.gz"
-	log:
-		outpath+"/logs/{sample_id}_trimmomatic.log"
-	params:
-		trim_options = config["trimmomatic"]["OPTIONS"],
-		trim_params = config["trimmomatic"]["PARAMS"],
-	shell:
-		'trimmomatic {params.trim_options} {inpath}/{wildcards.sample_id}_L001_001.fastq.gz {output} {params.trim_params} 2> {log}'
-
-rule fastqc:
-	output:
-		html = outpath+"/multiqc/{sample_id}_L001_001_fastqc.html",
-		zip = outpath+"/multiqc/{sample_id}_L001_001_fastqc.zip"
-	log:
-		outpath+"/logs/{sample_id}.fastqc.log"
-	
-	shell :
-		'fastqc -o {outpath}/multiqc {inpath}/{wildcards.sample_id}_L001_001.fastq.gz 2> {log}'
-"""
 rule multiqc:
 	input:
-		html = expand(outpath+"/multiqc/{sample_id}_L001_001_fastqc.html", sample_id = sample_id),
-		zip = expand(outpath+"/multiqc/{sample_id}_L001_001_fastqc.zip", sample_id = sample_id)
+		htmlfileR1 = expand(outpath+"/multiqc/{sample_id}_R1_trim_fastqc.html", sample_id=sample_id),
+		htmlfileR2 = expand(outpath+"/multiqc/{sample_id}_R2_trim_fastqc.html", sample_id=sample_id)
 	output:
 		outpath+"/multiqc/multiqc_report.html"
 	log:
@@ -183,51 +245,6 @@ rule ubam:
 	shell:
 		'picard FastqToSam FASTQ={input.R1} FASTQ2={input.R2} OUTPUT={output} READ_GROUP_NAME=1 SAMPLE_NAME={wildcards.sample_id} LIBRARY_NAME=lib_{wildcards.sample_id} PLATFORM_UNIT=unit1 PLATFORM=ILLUMINA'
 
-"""
-rule ubam:
-	output:
-		temp(outpath+"/{sample_id}/{sample_id}.unaligned.bam")
-	log:
-		outpath+"/logs/{sample_id}.fastqtosam.log"
-	shell:
-		'picard FastqToSam FASTQ={inpath}/{wildcards.sample_id}_L001_001.fastq.gz OUTPUT={output} READ_GROUP_NAME=1 SAMPLE_NAME={wildcards.sample_id} LIBRARY_NAME=lib_{wildcards.sample_id} PLATFORM_UNIT=unit1 PLATFORM=ILLUMINA'
-
-rule bwa_mem:
-	output:
-		temp(outpath+"/{sample_id}/{sample_id}_align.bam")
-	params:
-		bwamem_db = config["bwamem"]["DB"],
-		options = config["bwamem"]["OPTIONS"]
-	log:
-		outpath+"/logs/{sample_id}.bwamem.log"
-	shell:
-		'bwa mem {params.options} {params.bwamem_db} {inpath}/{wildcards.sample_id}_L001_001.fastq.gz 2> {log} > {output}'
-"""
-
-rule bwa_mem : 
-	input : 
-		R1 = outpath+"{sample_id}/{sample_id}_R1_trim.fastq.gz",
-		R2 = outpath+"{sample_id}/{sample_id}_R2_trim.fastq.gz"
-	output : 
-		outpath+"{sample_id}/{sample_id}_align.sam"
-	params:
-		bwamem_db = config["bwamem"]["DB"]
-	log :
-		"logs/{sample_id}.bwamem.log"
-	shell : 
-		'bwa mem {params.options} {params.bwamem_db} {input.R1} {input.R2} 2> {log} > {output}'
-
-rule markilluminaadapters:
-	input:
-		outpath+"/{sample_id}/{sample_id}_align.sam"
-	output:
-		bam = temp(outpath+"/{sample_id}/{sample_id}_markilluminaadapters.bam"),
-		metrics_adapters = outpath+"/{sample_id}/{sample_id}_markilluminaadapters_metrics.txt"
-	log:
-		outpath+"/logs/{sample_id}.markilluminaadapters.log"
-	shell:
-		'picard MarkIlluminaAdapters INPUT={input} OUTPUT={output.bam} METRICS={output.metrics_adapters} 2> {log}'
-
 rule addorreplacereadgroups:
 	input:
 		outpath+"/{sample_id}/{sample_id}.unaligned.bam"
@@ -238,32 +255,11 @@ rule addorreplacereadgroups:
 	shell: 
 		'picard AddOrReplaceReadGroups I={input} O={outpath}/{wildcards.sample_id}/{wildcards.sample_id}.readgroups_unmapped.bam ID=FLOWCELL_{wildcards.sample_id} LB=LIB_{wildcards.sample_id} PL=ILLUMINA SM={wildcards.sample_id} PU=unit1 2> {log}'
 
-"""
-rule samtofastq:
-	input:
-		outpath+"/{sample_id}/{sample_id}_markilluminaadapters.bam"
-	output:
-		temp(outpath+"/{sample_id}/{sample_id}.fastq")
-	log:
-		outpath+"/logs/{sample_id}.samtofastq.log"
-	shell:
-		'picard SamToFastq I={input} FASTQ={output} CLIP_ATTR=XT CLIP_ACT=2 INTER=true NON_PF=true 2> {log}'
-"""
-
-rule samtofastq:
-	input:
-		outpath+"/{sample_id}/{sample_id}_align.sam"
-	output:
-		R1 = temp(outpath+"/{sample_id}/{sample_id}_R1.fastq"),
-		R2 = temp(outpath+"/{sample_id}/{sample_id}_R2.fastq")
-	log:
-		outpath+"/logs/{sample_id}.samtofastq.log"
-	shell:
-		'picard SamToFastq I={input} FASTQ={output.R1} SECOND_END_FASTQ={output.R2} CLIP_ATTR=XT CLIP_ACT=2 NON_PF=true 2> {log}'
 
 rule bwa_mem2:
 	input:
-		outpath+"/{sample_id}/{sample_id}.fastq"
+		R1 = outpath+"/{sample_id}/{sample_id}_R1_trim.fastq.gz",
+		R2 = outpath+"/{sample_id}/{sample_id}_R2_trim.fastq.gz"
 	output:
 		temp(outpath+"/{sample_id}/{sample_id}.sam")
 	params:
@@ -272,7 +268,7 @@ rule bwa_mem2:
 	log:
 		outpath+"/logs/{sample_id}.bwa_mem2.log"
 	shell:
-		"bwa mem {params.options} -M -R '@RG\\tID:FLOWCELL_{wildcards.sample_id}\\tSM:{wildcards.sample_id}\\tPL:ILLUMINA\\tLB:LIB_{wildcards.sample_id}' -p {params.ref} {input} 2> {log} > {output}"
+		"bwa mem {params.options} -M -R '@RG\\tID:FLOWCELL_{wildcards.sample_id}\\tSM:{wildcards.sample_id}\\tPL:ILLUMINA\\tLB:LIB_{wildcards.sample_id}' -p {params.ref} {input.R1} {input.R2} 2> {log} > {output}"
 
 rule sam2bam:
 	input:

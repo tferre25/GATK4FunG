@@ -1,18 +1,17 @@
 {
 	"general_path": {
-		"INPUT_PATH" : "/home/julien/Documents/parasito/data",
-		"OUTPUT_PATH" : "/home/julien/Documents/parasito/output_test",
+		"INPUT_PATH" : "/media/julien/Elements/fungi_variant_calling/data",
+		"OUTPUT_PATH" : "/media/julien/Elements/fungi_variant_calling/output",
 		"filterGatkGenotypes_PATH" : "/home/julien/Documents/parasito/Reference",
-		"vcfToFasta_PATH" : "/home/julien/Documents/parasito/Reference",
-		"REF_PATH" : "/home/julien/Documents/parasito/ref_fasta"
+		"vcfToFasta_PATH" : "/home/julien/Documents/parasito/Reference"
 	},
 	"trimmomatic": {
-		"OPTIONS" : "PE -threads 6",
+		"OPTIONS" : "PE -threads 8",
 		"PARAMS" : "SLIDINGWINDOW:4:25"
 	},
 	"bwamem": {
 		"OPTIONS" : "-t 8",
-		"DB" : "/home/julien/Documents/parasito/Reference/GCF_002775015.1_Cand_auris_B11221_V1_genomic.fna"
+		"DB" : "/media/julien/Elements/fungi_variant_calling/ref/mucor_circinelloides.fna"
 	},
 	"iqtree": {
 		"OPTIONS" : "-bb 1000 -nt 8 -wbt"
