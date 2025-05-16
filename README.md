@@ -1,4 +1,4 @@
-# Fungi Variant Calling
+# GATK4FunG: A Fungi Variant Caller
 
 A reproducible Snakemake-based pipeline for calling variants in fungal sequencing data, from raw FASTQ to phylogenetic tree reconstruction.
 
