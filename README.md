@@ -20,8 +20,8 @@ All tools are managed via Conda (`fungi` environment) to ensure reproducibility.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/fungi-variant-calling.git
-cd fungi-variant-calling
+git clone https://github.com/yourusername/GATK4FunG.git
+cd GATK4FunG
 ```
 
 ### 2. Prepare configuration
