@@ -1,5 +1,5 @@
 #######################################################
-#	Pipeline Parasito (trouver un meilleur nom)
+#	Variant Caller for fungi
 #
 #	Auteur : Julien Robert
 #	Mail : julien.robert@aphp.fr
