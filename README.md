@@ -103,3 +103,5 @@ We welcome contributions to our application!
 
 If you have any questions or concerns about our application, please contact us at julien.robert@aphp.fr or theo.ferreira@aphp.fr
 
+[![DOI](https://zenodo.org/badge/605066984.svg)](https://doi.org/10.5281/zenodo.15570692)
+
